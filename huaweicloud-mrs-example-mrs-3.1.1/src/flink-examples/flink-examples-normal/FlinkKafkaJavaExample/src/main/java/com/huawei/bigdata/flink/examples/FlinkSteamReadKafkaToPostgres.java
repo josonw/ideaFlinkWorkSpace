@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.huawei.bigdata.flink.examples.bean.Kafkacase;
 import org.apache.flink.api.common.functions.MapFunction;
 
@@ -16,14 +15,8 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
-import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
 
-
-import java.util.Date;
-import java.util.Properties;
-
-public class ReadFromKafkamy {
+public class FlinkSteamReadKafkaToPostgres {
 
     public static void main(String[] args) throws Exception {
 
