@@ -78,7 +78,7 @@
             <version>1.12.1</version>
         </dependency>
 
-        <!-- 连接 postgresql 驱动 https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+        <!-- 42.3.1 连接 postgresql 驱动 https://mvnrepository.com/artifact/org.postgresql/postgresql -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
