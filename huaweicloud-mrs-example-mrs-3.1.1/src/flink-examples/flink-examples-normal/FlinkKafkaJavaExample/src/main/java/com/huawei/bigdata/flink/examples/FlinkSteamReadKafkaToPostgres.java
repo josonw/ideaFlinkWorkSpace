@@ -134,5 +134,6 @@ public class FlinkSteamReadKafkaToPostgres {
             running = false;
         }
     }
+
 }
 
