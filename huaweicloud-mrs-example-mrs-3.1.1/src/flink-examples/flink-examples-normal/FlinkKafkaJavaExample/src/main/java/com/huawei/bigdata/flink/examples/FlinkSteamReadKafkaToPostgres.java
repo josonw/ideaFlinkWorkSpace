@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import com.huawei.bigdata.flink.examples.bean.Kafkacase;
+import org.apache.avro.data.Json;
 import org.apache.flink.api.common.functions.MapFunction;
 
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
@@ -16,8 +17,12 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 
-public class FlinkSteamReadKafkaToPostgres {
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Random;
 
+public class FlinkSteamReadKafkaToPostgres {
     public static void main(String[] args) throws Exception {
 
 
@@ -33,67 +38,19 @@ public class FlinkSteamReadKafkaToPostgres {
 //        FlinkKafkaConsumer<String> SourceSafe = new FlinkKafkaConsumer<String>(topic, new SimpleStringSchema(), prop);
 //        DataStreamSource<String> kafkaSource = env.addSource(SourceSafe);
 
-        DataStreamSource dataSource = env.addSource(
-                new SourceFunction<String>() {
-                    @Override
-                    public void run(SourceContext<String> context) throws Exception {
-                     String content=  "{\n" +
-                               "    \"value\":[\n" +
-                               "        {\n" +
-                               "            \"name_wave\":\"地下水\",\n" +
-                               "            \"entry_time\":\"2020-09-25 18:28:19\",\n" +
-                               "            \"name_monitor_type\":\"地下水\",\n" +
-                               "            \"name_manual_type\":\"国考\",\n" +
-                               "            \"latitude\":\"22.575785\",\n" +
-                               "            \"remark\":\"监测站手工\",\n" +
-                               "            \"code_manual_type\":1,\n" +
-                               "            \"point_name\":\"恩上村\",\n" +
-                               "            \"point_code\":\"GD-14-014\",\n" +
-                               "            \"assessment_level\":\"0\",\n" +
-                               "            \"is_black\":\"0\",\n" +
-                               "            \"update_time\":\"2021-07-16 14:17:07\",\n" +
-                               "            \"monitor_mode\":\"0\",\n" +
-                               "            \"code_monitor_type\":\"5\",\n" +
-                               "            \"system_source\":\"思路数据库\",\n" +
-                               "            \"longitude\":114.246642,\n" +
-                               "            \"region_code\":\"440308000000\",\n" +
-                               "            \"code_wave\":\"2\",\n" +
-                               "            \"rksj\":\"2022-08-19 16:31:31\",\n" +
-                               "            \"ywsj\":null,\n" +
-                               "            \"ywdwtyshxydm\":\"11440300MB2C93125R\",\n" +
-                               "            \"sbdwtyshxydm\":\"11440300MB2C93166R\"\n" +
-                               "        }\n" +
-                               "    ]\n" +
-                               "}";
-                     context.collect(content);
-                    }
-                    @Override
-                    public void cancel() {
-
-                    }
-                }
-        );
-
-
-//        SingleOutputStreamOperator mapSource = dataSource.map(data -> {
-//            JSONObject jsonObt = JSON.parseObject((String) data);
-//            Object value = jsonObt.get("value");
-//            return value;
-//        });
+        DataStreamSource dataSource = env.addSource(new JsonString());
 
 
         //注意这边要写上返回值的类型<Kafkacase>，否则 底下jdbc不知道类的字段
         SingleOutputStreamOperator<Kafkacase> jsonmap = dataSource.map(new maptoJson());
-
         jsonmap.print();
-
         jsonmap.addSink(JdbcSink.sink(
                 "INSERT INTO envent_table (name,entry_time,name_manual_type,remark,update_time) values (?, ?,?,?,?)",
                 (statement, kafkacase) -> {
                     statement.setString(1, kafkacase.name);
                     statement.setString(2, kafkacase.entry_time);
                     statement.setString(3, kafkacase.name_manual_type);
-                    statement.setString(4,kafkacase.remark);
+                    statement.setString(4, kafkacase.remark);
                     statement.setString(5, kafkacase.update_time);
                 },
                 JdbcExecutionOptions.builder()
@@ -102,24 +59,22 @@ public class FlinkSteamReadKafkaToPostgres {
                         .withMaxRetries(5)
                         .build(),
                 new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                        .withUrl("jdbc:postgresql://192.168.10.110:5432/test_pg")
+//                        .withUrl("jdbc:postgresql://192.168.10.110:5432/test_pg")
+                        .withUrl("jdbc:postgresql://43.138.134.40:5432/postgres")
                         .withDriverName("org.postgresql.Driver")
                         .withUsername("postgres")
-                        .withPassword("postgres")
+                        .withPassword("123456")
                         .build()
 
-
         ));
-
-
-
 
         env.execute();
 
 
     }
 
-    public  static  class    maptoJson implements MapFunction<String,Kafkacase> {
+
+    public static class maptoJson implements MapFunction<String, Kafkacase> {
 
         @Override
         public Kafkacase map(String data) throws Exception {
@@ -132,7 +87,7 @@ public class FlinkSteamReadKafkaToPostgres {
             //获取array中的第几个Json对象，这里模拟只有一个，现实中可以用循环取出所以数据
             JSONObject value = arrayvalue.getJSONObject(0);
             //以下就是取Json中每个key 的内容，根据key 的类型进行获取
-            String name = value.getString("name_wave");
+            String name = value.getString("name");
             String entry_time = value.getString("entry_time");
             String name_manual_type = value.getString("name_manual_type");
             String remark = value.getString("remark");
@@ -140,12 +95,44 @@ public class FlinkSteamReadKafkaToPostgres {
 
             Integer code_manual_type = value.getInteger("code_manual_type");
 
-         return    new Kafkacase(name,entry_time,name_manual_type,remark,update_time);
-//            String res=name+" "+entry_time+" "+code_manual_type;
-//            return res;
+            return new Kafkacase(name, entry_time, name_manual_type, remark, update_time);
+
 
         }
     }
 
+    public static class JsonString implements SourceFunction<String> {
+
+        private static Boolean running = true;
+
+        @Override
+        public void run(SourceContext<String> ct) throws Exception {
+//            name,entry_time,name_manual_type,remark,update_time
+
+            while (running) {
+                Random rd = new Random();
+                List<String> nameString = Arrays.asList("地下水", "自来水", "山泉水", "井水");
+                List<String> name_manual_typeString = Arrays.asList("国考", "省考", "联考", "统考");
+                List<String> remarktypeString = Arrays.asList("监测站手工", "观察手工", "检验手工", "抽查");
+                ct.collect(
+                        new Kafkacase(nameString.get(rd.nextInt(4)),
+                                String.valueOf(System.currentTimeMillis()),
+                                name_manual_typeString.get(rd.nextInt(4)),
+                                name_manual_typeString.get(rd.nextInt(4)),
+                                String.valueOf(Calendar.getInstance().getTimeInMillis())
+                        ).toString()
+
+                );
+                Thread.sleep(1000);
+
+            }
+
+        }
+
+        @Override
+        public void cancel() {
+            running = false;
+        }
+    }
 }
 
