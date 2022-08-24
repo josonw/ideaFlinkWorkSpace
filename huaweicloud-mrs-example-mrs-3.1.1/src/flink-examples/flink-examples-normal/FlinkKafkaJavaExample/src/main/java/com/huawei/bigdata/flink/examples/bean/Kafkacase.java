@@ -61,12 +61,13 @@ public class Kafkacase {
 
     @Override
     public String toString() {
-        return "Kafkacase{" +
-                "name='" + name + '\'' +
-                ", entry_time='" + entry_time + '\'' +
-                ", name_manual_type='" + name_manual_type + '\'' +
-                ", remark='" + remark + '\'' +
-                ", update_time='" + update_time + '\'' +
+        return   "{"+"\"value\""+':'+ "["+"{" +
+                "\"name\":\"" + name + '"' +
+                ", \"entry_time\":\"" + entry_time + '"' +
+                ", \"name_manual_type\":\"" + name_manual_type + '"' +
+                ", \"remark\":\"" + remark + '"' +
+                ", \"update_time\":\"" + update_time + '"' +
+                '}'+']' +
                 '}';
     }
 }
