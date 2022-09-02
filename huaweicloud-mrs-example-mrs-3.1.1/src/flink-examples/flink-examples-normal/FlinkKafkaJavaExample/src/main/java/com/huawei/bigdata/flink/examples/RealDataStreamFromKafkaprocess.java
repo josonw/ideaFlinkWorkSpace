@@ -1,9 +1,9 @@
 package com.huawei.bigdata.flink.examples;
 
-import bean.caseName;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.huawei.bigdata.flink.examples.bean.caseName;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;

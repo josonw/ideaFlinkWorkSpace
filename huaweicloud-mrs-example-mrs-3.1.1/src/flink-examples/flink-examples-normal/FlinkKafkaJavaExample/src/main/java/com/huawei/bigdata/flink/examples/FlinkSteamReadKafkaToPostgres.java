@@ -4,23 +4,16 @@ package com.huawei.bigdata.flink.examples;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-
 import com.huawei.bigdata.flink.examples.bean.Kafkacase;
-import org.apache.avro.data.Json;
 import org.apache.flink.api.common.functions.MapFunction;
-
-import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
-import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
-import org.apache.flink.connector.jdbc.JdbcSink;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Random;
+
+import java.util.*;
 
 public class FlinkSteamReadKafkaToPostgres {
     public static void main(String[] args) throws Exception {
@@ -28,45 +21,48 @@ public class FlinkSteamReadKafkaToPostgres {
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-//        String topic = "test";
-//        Properties prop = new Properties();
+        String topic = "demo";
+        Properties prop = new Properties();
 //        prop.setProperty("bootstrap.servers", "10.224.153.74:9097,10.224.153.74:9098,10.224.153.74:9095,10.224.153.74:9096,10.224.153.74:9094,10.224.153.74:9103,10.224.153.74:9101,10.224.153.74:9102,10.224.153.74:9099,10.224.153.74:9100");//多个的话可以指定
-//        prop.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-//        prop.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-//        prop.setProperty("auto.offset.reset", "earliest");
-//        prop.setProperty("group.id", "consumer1");
-//        FlinkKafkaConsumer<String> SourceSafe = new FlinkKafkaConsumer<String>(topic, new SimpleStringSchema(), prop);
-//        DataStreamSource<String> kafkaSource = env.addSource(SourceSafe);
+        prop.setProperty("bootstrap.servers", "192.168.10.110:9092");
+        prop.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        prop.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        prop.setProperty("auto.offset.reset", "earliest");
+        prop.setProperty("group.id", "consumer1");
+        FlinkKafkaConsumer<String> SourceSafe = new FlinkKafkaConsumer<String>(topic, new SimpleStringSchema(), prop);
+        DataStreamSource<String> kafkaSource = env.addSource(SourceSafe);
+
+        kafkaSource.print();
 
         DataStreamSource dataSource = env.addSource(new JsonString());
 
-
-        //注意这边要写上返回值的类型<Kafkacase>，否则 底下jdbc不知道类的字段
-        SingleOutputStreamOperator<Kafkacase> jsonmap = dataSource.map(new maptoJson());
-        jsonmap.print();
-        jsonmap.addSink(JdbcSink.sink(
-                "INSERT INTO envent_table (name,entry_time,name_manual_type,remark,update_time) values (?, ?,?,?,?)",
-                (statement, kafkacase) -> {
-                    statement.setString(1, kafkacase.name);
-                    statement.setString(2, kafkacase.entry_time);
-                    statement.setString(3, kafkacase.name_manual_type);
-                    statement.setString(4, kafkacase.remark);
-                    statement.setString(5, kafkacase.update_time);
-                },
-                JdbcExecutionOptions.builder()
-                        .withBatchSize(1000)
-                        .withBatchIntervalMs(200)
-                        .withMaxRetries(5)
-                        .build(),
-                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-//                        .withUrl("jdbc:postgresql://192.168.10.110:5432/test_pg")
-                        .withUrl("jdbc:postgresql://43.138.134.40:5432/postgres")
-                        .withDriverName("org.postgresql.Driver")
-                        .withUsername("postgres")
-                        .withPassword("123456")
-                        .build()
-
-        ));
+//
+//        //注意这边要写上返回值的类型<Kafkacase>，否则 底下jdbc不知道类的字段
+//        SingleOutputStreamOperator<Kafkacase> jsonmap = dataSource.map(new maptoJson());
+//        jsonmap.print();
+//        jsonmap.addSink(JdbcSink.sink(
+//                "INSERT INTO envent_table (name,entry_time,name_manual_type,remark,update_time) values (?, ?,?,?,?)",
+//                (statement, kafkacase) -> {
+//                    statement.setString(1, kafkacase.name);
+//                    statement.setString(2, kafkacase.entry_time);
+//                    statement.setString(3, kafkacase.name_manual_type);
+//                    statement.setString(4, kafkacase.remark);
+//                    statement.setString(5, kafkacase.update_time);
+//                },
+//                JdbcExecutionOptions.builder()
+//                        .withBatchSize(1000)
+//                        .withBatchIntervalMs(200)
+//                        .withMaxRetries(5)
+//                        .build(),
+//                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+////                        .withUrl("jdbc:postgresql://192.168.10.110:5432/test_pg")
+//                        .withUrl("jdbc:postgresql://43.138.134.40:5432/postgres")
+//                        .withDriverName("org.postgresql.Driver")
+//                        .withUsername("postgres")
+//                        .withPassword("123456")
+//                        .build()
+//
+//        ));
 
         env.execute();
 

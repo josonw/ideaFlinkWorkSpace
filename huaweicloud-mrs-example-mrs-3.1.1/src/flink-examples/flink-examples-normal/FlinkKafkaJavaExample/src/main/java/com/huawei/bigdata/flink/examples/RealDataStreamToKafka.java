@@ -1,6 +1,7 @@
 package com.huawei.bigdata.flink.examples;
 
-import bean.Kafkacase;
+
+import com.huawei.bigdata.flink.examples.bean.Kafkacase;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -26,6 +27,19 @@ public class RealDataStreamToKafka {
 
 
         DataStreamSource dataSource = env.addSource(new JsonString());
+
+//        dataSource.assignTimestampsAndWatermarks(
+//                // 设置最大的乱序时间
+//                WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(1))
+//                        //提取事件中的时间戳作为watermark：注意现实中的泛型
+//                        .withTimestampAssigner(new SerializableTimestampAssigner(){
+//                            @Override
+//                            public long extractTimestamp(Object o, long l) {
+//                                return 0;
+//                            }
+//                        })
+//        );
+
 
         dataSource.print();
 
